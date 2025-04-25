@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelMorph Pro | Image Converter</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --secondary: #4f46e5;
+            --background: #f8fafc;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        /* Converter Section */
+        .converter-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        }
+
+        /* Upload Section */
+        .upload-section {
+            border: 2px dashed var(--border);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .upload-section:hover {
+            border-color: var(--primary);
+            background: #f8fafc;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        /* Preview Section */
+        .preview-container {
+            position: relative;
+            border-radius: 1rem;
+            overflow: hidden;
+            background: #f1f5f9;
+            min-height: 300px;
+        }
+
+        .preview-image {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+
+        /* Comparison Slider */
+        .comparison-slider {
+            position: relative;
+            width: 100%;
+            height: 300px;
+        }
+
+        .before-after {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+
+        /* Controls */
+        .controls {
+            margin-top: 2rem;
+        }
+
+        .format-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .format-btn {
+            padding: 0.75rem 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .format-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .quality-control {
+            margin: 1.5rem 0;
+        }
+
+        .convert-btn {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 0.5rem;
+            width: 100%;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .convert-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* File Info */
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .converter-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>PixelMorph Pro</h1>
+            <p>Convert images instantly with professional quality</p>
+        </header>
+
+        <main class="converter-wrapper">
+            <div class="upload-section" id="dropZone">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <h3>Drag & Drop Your Image</h3>
+                <p>or click to browse files</p>
+                <input type="file" id="fileInput" hidden accept="image/*">
+            </div>
+
+            <div class="preview-container">
+                <div class="comparison-slider">
+                    <div class="before-after">
+                        <img src="placeholder-before.jpg" class="preview-image" id="beforeImage">
+                        <img src="placeholder-after.jpg" class="preview-image" id="afterImage">
+                    </div>
+                </div>
+                <div class="file-info">
+                    <span id="originalSize">Original: -</span>
+                    <span id="convertedSize">Converted: -</span>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="format-selector">
+                    <button class="format-btn active" data-format="jpg">JPG</button>
+                    <button class="format-btn" data-format="png">PNG</button>
+                    <button class="format-btn" data-format="webp">WEBP</button>
+                    <button class="format-btn" data-format="pdf">PDF</button>
+                </div>
+
+                <div class="quality-control">
+                    <label>Quality Control</label>
+                    <input type="range" id="qualitySlider" min="1" max="100" value="90">
+                    <span id="qualityValue">90%</span>
+                </div>
+
+                <button class="convert-btn" id="convertBtn">
+                    <i class="fas fa-magic"></i> Convert Now
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class ImageConverter {
+            constructor() {
+                this.initializeElements();
+                this.setupEventListeners();
+                this.state = {
+                    currentFile: null,
+                    selectedFormat: 'jpg',
+                    convertedBlob: null
+                };
+            }
+
+            initializeElements() {
+                this.elements = {
+                    fileInput: document.getElementById('fileInput'),
+                    dropZone: document.getElementById('dropZone'),
+                    convertBtn: document.getElementById('convertBtn'),
+                    qualitySlider: document.getElementById('qualitySlider'),
+                    qualityValue: document.getElementById('qualityValue'),
+                    formatButtons: document.querySelectorAll('.format-btn'),
+                    beforeImage: document.getElementById('beforeImage'),
+                    afterImage: document.getElementById('afterImage'),
+                    originalSize: document.getElementById('originalSize'),
+                    convertedSize: document.getElementById('convertedSize')
+                };
+            }
+
+            setupEventListeners() {
+                this.elements.dropZone.addEventListener('click', () => this.elements.fileInput.click());
+                this.elements.dropZone.addEventListener('dragover', this.handleDragOver.bind(this));
+                this.elements.dropZone.addEventListener('drop', this.handleDrop.bind(this));
+                this.elements.fileInput.addEventListener('change', this.handleFileSelect.bind(this));
+                this.elements.formatButtons.forEach(btn => 
+                    btn.addEventListener('click', this.selectFormat.bind(this))
+                );
+                this.elements.qualitySlider.addEventListener('input', this.updateQuality.bind(this));
+                this.elements.convertBtn.addEventListener('click', this.startConversion.bind(this));
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                this.elements.dropZone.style.borderColor = 'var(--primary)';
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                this.elements.dropZone.style.borderColor = 'var(--border)';
+                const file = e.dataTransfer.files[0];
+                if (file) this.loadImage(file);
+            }
+
+            handleFileSelect(e) {
+                const file = e.target.files[0];
+                if (file) this.loadImage(file);
+            }
+
+            async loadImage(file) {
+                if (!file.type.startsWith('image/')) return;
+                
+                this.state.currentFile = file;
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    this.elements.beforeImage.src = e.target.result;
+                    this.updateFileInfo(file.size);
+                    this.updateConvertedSize();
+                };
+                reader.readAsDataURL(file);
+            }
+
+            selectFormat(e) {
+                this.elements.formatButtons.forEach(btn => btn.classList.remove('active'));
+                e.target.classList.add('active');
+                this.state.selectedFormat = e.target.dataset.format;
+                this.updateConvertedSize();
+            }
+
+            updateQuality(e) {
+                this.elements.qualityValue.textContent = `${e.target.value}%`;
+                this.updateConvertedSize();
+            }
+
+            async updateConvertedSize() {
+                if (!this.state.currentFile) return;
+                
+                try {
+                    const quality = this.elements.qualitySlider.value / 100;
+                    const img = await createImageBitmap(this.state.currentFile);
+                    const canvas = document.createElement('canvas');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    canvas.getContext('2d').drawImage(img, 0, 0);
+                    
+                    canvas.toBlob(blob => {
+                        this.state.convertedBlob = blob;
+                        this.elements.convertedSize.textContent = `Converted: ${this.formatSize(blob.size)}`;
+                        this.elements.afterImage.src = URL.createObjectURL(blob);
+                    }, `image/${this.state.selectedFormat}`, quality);
+                } catch (error) {
+                    console.error('Error processing image:', error);
+                }
+            }
+
+            async startConversion() {
+                if (!this.state.currentFile) return alert('Please select an image first');
+                
+                try {
+                    if (this.state.selectedFormat === 'pdf') {
+                        await this.convertToPDF();
+                    } else {
+                        this.downloadFile(this.state.convertedBlob);
+                    }
+                } catch (error) {
+                    alert('Conversion failed. Please try again.');
+                }
+            }
+
+            async convertToPDF() {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF();
+                const img = await createImageBitmap(this.state.currentFile);
+                
+                const width = pdf.internal.pageSize.getWidth();
+                const height = (img.height * width) / img.width;
+                
+                pdf.addImage(img, 'JPEG', 0, 0, width, height);
+                pdf.save(`converted-${Date.now()}.pdf`);
+            }
+
+            downloadFile(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `converted-${Date.now()}.${this.state.selectedFormat}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            formatSize(bytes) {
+                const sizes = ['B', 'KB', 'MB'];
+                if (bytes === 0) return '0 B';
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
+            }
+
+            updateFileInfo(size) {
+                this.elements.originalSize.textContent = `Original: ${this.formatSize(size)}`;
+            }
+        }
+
+        // Initialize Converter
+        document.addEventListener('DOMContentLoaded', () => {
+            new ImageConverter();
+        });
+    </script>
+</body>
+</html>
